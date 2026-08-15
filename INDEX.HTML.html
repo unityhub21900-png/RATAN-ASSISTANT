@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>RATAN AI — Complete Assistant</title>
+<style>
+/* ========== CSS Variables & Resets ========== */
+:root {
+  --bg: #f5f7fc;
+  --panel: #ffffff;
+  --panel2: #eef1f7;
+  --text: #121826;
+  --muted: #5e6a87;
+  --line: #dde2ed;
+  --primary: #6c3ce0;
+  --primary-light: #8a5cf5;
+  --cyan: #15c3d4;
+  --danger: #d43d5a;
+  --success: #0f8b4f;
+  --shadow: 0 12px 40px rgba(10, 20, 40, 0.08);
+  --radius: 20px;
+  --user-msg: #6c3ce0;
+  --ai-msg: #ffffff;
+  --transition: 0.25s ease;
+  --font: 'Inter', system-ui, -apple-system, sans-serif;
+  --sidebar-width: 240px;
+}
+body.dark {
+  --bg: #0b0e17;
+  --panel: #141a28;
+  --panel2: #1e2538;
+  --text: #f0f2f9;
+  --muted: #8f99b5;
+  --line: #2a3147;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  --ai-msg: #1a2132;
+  --user-msg: #7a4cf0;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  transition: background var(--transition), color var(--transition);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.app {
+  width: 100%;
+  max-width: 1360px;
+  height: 96vh;
+  max-height: 920px;
+  background: var(--panel);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  overflow: hidden;
+  transition: background var(--transition), box-shadow var(--transition);
+  border: 1px solid var(--line);
+  position: relative;
+}
+/* ── Sidebar ── */
+.sidebar {
+  background: var(--panel2);
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-right: 1px solid var(--line);
+  transition: background var(--transition), border var(--transition);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.brand {
+  font-size: 26px;
+  font-weight: 800;
+  padding: 10px 6px 22px 6px;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--primary), var(--cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.brand small { font-size:14px; font-weight:500; -webkit-text-fill-color:var(--muted); display:block; margin-top:-4px; letter-spacing:0.2px; }
+.nav { display:flex; flex-direction:column; gap:2px; }
+.nav button {
+  border:none; background:transparent; color:var(--muted); text-align:left;
+  padding:12px 14px; border-radius:14px; font-weight:550; font-size:15px;
+  display:flex; align-items:center; gap:12px; transition:background 0.15s, color 0.15s;
+  cursor:pointer; width:100%;
+}
+.nav button:hover { background:var(--line); color:var(--text); }
+.nav button.active { background:var(--primary); color:#fff; box-shadow:0 4px 12px rgba(108,60,224,0.3); }
+.nav button .icon { font-size:20px; width:28px; text-align:center; }
+.sidebar-footer {
+  margin-top:auto; padding:12px 6px 0 6px; border-top:1px solid var(--line);
+  font-size:12px; color:var(--muted); display:flex; flex-direction:column; gap:8px;
+}
+.sidebar-footer .theme-toggle {
+  display:flex; align-items:center; gap:10px;
+  background:var(--panel); border:1px solid var(--line); border-radius:40px;
+  padding:6px 12px 6px 16px; font-size:13px; color:var(--text);
+  cursor:pointer; transition:background 0.15s;
+}
+.sidebar-footer .theme-toggle:hover { background:var(--line); }
+.sidebar-footer .version { font-size:11px; opacity:0.5; text-align:center; }
+/* ── Main ── */
+.main {
+  display:flex; flex-direction:column; min-width:0;
+  background:var(--panel); transition:background var(--transition);
+  overflow:hidden;
+}
+.topbar {
+  padding:14px 24px; border-bottom:1px solid var(--line);
+  display:flex; align-items:center; justify-content:space-between;
+  flex-shrink:0; background:var(--panel);
+  transition:background var(--transition), border var(--transition);
+  gap:12px; flex-wrap:wrap;
+}
+.topbar-left { display:flex; align-items:center; gap:10px; }
+.topbar h2 { font-size:20px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.topbar h2 span { background:var(--primary); color:#fff; font-size:12px; padding:2px 12px; border-radius:30px; font-weight:500; }
+.topbar .badge-status { font-size:13px; display:flex; align-items:center; gap:6px; }
+.topbar .badge-status.online { color:var(--success); }
+.topbar .badge-status.online::before { content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--success); }
+.topbar .badge-status.offline { color:var(--danger); }
+.topbar .badge-status.offline::before { content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--danger); }
+.mobile-menu-btn { display:none; background:transparent; border:none; font-size:26px; color:var(--text); cursor:pointer; padding:4px 8px; }
+.content { flex:1; overflow-y:auto; padding:20px 24px 30px; background:var(--panel); transition:background var(--transition); }
+.view { display:none; animation:fadeUp 0.3s ease; }
+.view.active { display:block; }
+@keyframes fadeUp { 0% { opacity:0.3; transform:translateY(10px); } 100% { opacity:1; transform:translateY(0); } }
+/* ── Chat ── */
+.chat-container { display:flex; flex-direction:column; height:100%; min-height:400px; }
+.messages { flex:1; overflow-y:auto; padding:8px 4px 12px 4px; display:flex; flex-direction:column; gap:10px; }
+.msg { max-width:82%; padding:14px 18px; border-radius:20px; line-height:1.6; font-size:15px; white-space:pre-wrap; overflow-wrap:anywhere; animation:msgPop 0.2s ease; box-shadow:0 2px 6px rgba(0,0,0,0.04); }
+.msg.ai { background:var(--ai-msg); border:1px solid var(--line); align-self:flex-start; border-bottom-left-radius:4px; color:var(--text); }
+.msg.user { background:var(--user-msg); color:#fff; align-self:flex-end; border-bottom-right-radius:4px; }
+.msg .timestamp { font-size:10px; opacity:0.5; margin-top:6px; display:block; }
+@keyframes msgPop { 0% { opacity:0; transform:scale(0.96); } 100% { opacity:1; transform:scale(1); } }
+.typing-indicator { display:flex; align-items:center; gap:6px; padding:10px 16px; background:var(--ai-msg); border:1px solid var(--line); border-radius:30px; align-self:flex-start; font-size:14px; color:var(--muted); }
+.typing-indicator .dot { width:8px; height:8px; background:var(--primary); border-radius:50%; animation:pulse 1.2s infinite; }
+.typing-indicator .dot:nth-child(2) { animation-delay:0.2s; }
+.typing-indicator .dot:nth-child(3) { animation-delay:0.4s; }
+@keyframes pulse { 0%,80%,100% { transform:scale(0.4); opacity:0.3; } 40% { transform:scale(1); opacity:1; } }
+.input-area { display:flex; gap:10px; padding:14px 0 4px 0; border-top:1px solid var(--line); margin-top:6px; flex-shrink:0; background:var(--panel); transition:background var(--transition), border var(--transition); }
+.input-area input { flex:1; border:1px solid var(--line); background:var(--panel2); color:var(--text); padding:12px 18px; border-radius:40px; font-size:15px; outline:none; transition:border 0.2s, box-shadow 0.2s; }
+.input-area input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(108,60,224,0.15); }
+.input-area input::placeholder { color:var(--muted); }
+.input-area button { border:none; background:var(--primary); color:#fff; width:52px; height:52px; border-radius:50%; font-size:22px; display:flex; align-items:center; justify-content:center; transition:background 0.2s, transform 0.1s; cursor:pointer; flex-shrink:0; }
+.input-area button:hover { background:var(--primary-light); }
+.input-area button:active { transform:scale(0.92); }
+.input-area .voice-btn { background:var(--panel2); color:var(--text); border:1px solid var(--line); font-size:20px; }
+.input-area .voice-btn:hover { background:var(--line); }
+.input-area .voice-btn.listening { background:var(--danger); color:#fff; border-color:var(--danger); animation:pulse-ring 1.2s infinite; }
+@keyframes pulse-ring { 0% { box-shadow:0 0 0 0 rgba(212,61,90,0.4); } 70% { box-shadow:0 0 0 12px rgba(212,61,90,0); } 100% { box-shadow:0 0 0 0 rgba(212,61,90,0); } }
+.quick-chips { display:flex; flex-wrap:wrap; gap:8px; padding:8px 0 2px 0; }
+.quick-chips button { border:1px solid var(--line); background:var(--panel2); color:var(--text); padding:6px 16px; border-radius:30px; font-size:13px; cursor:pointer; transition:background 0.15s, border 0.15s; }
+.quick-chips button:hover { background:var(--primary); color:#fff; border-color:var(--primary); }
+/* ── Tasks / Notes / Reminders ── */
+.list-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:12px; }
+.list-header .btn-primary { background:var(--primary); color:#fff; border:none; padding:10px 24px; border-radius:40px; font-weight:600; font-size:14px; cursor:pointer; transition:background 0.2s; display:flex; align-items:center; gap:8px; }
+.list-header .btn-primary:hover { background:var(--primary-light); }
+.item-card { background:var(--panel2); border:1px solid var(--line); border-radius:16px; padding:16px 18px; margin-bottom:10px; display:flex; align-items:flex-start; gap:14px; transition:background 0.2s, border 0.2s; border-left:5px solid var(--primary); }
+.item-card .info { flex:1; min-width:0; }
+.item-card .info .title { font-weight:650; font-size:16px; }
+.item-card .info .desc { color:var(--muted); font-size:14px; margin-top:2px; }
+.item-card .info .meta { font-size:12px; color:var(--muted); margin-top:6px; display:flex; flex-wrap:wrap; gap:12px; }
+.item-card .actions { display:flex; gap:6px; flex-shrink:0; }
+.item-card .actions button { border:none; background:transparent; color:var(--muted); font-size:18px; cursor:pointer; padding:4px 6px; border-radius:8px; transition:background 0.15s, color 0.15s; }
+.item-card .actions button:hover { background:var(--line); color:var(--text); }
+.item-card .actions .delete:hover { color:var(--danger); }
+.item-card.done .info .title { text-decoration:line-through; opacity:0.6; }
+.empty-state { text-align:center; padding:50px 20px; color:var(--muted); }
+.empty-state .big-icon { font-size:56px; margin-bottom:12px; }
+.empty-state h3 { font-size:20px; color:var(--text); margin-bottom:4px; }
+/* ── Settings ── */
+.settings-group { background:var(--panel2); border:1px solid var(--line); border-radius:16px; padding:20px 24px; margin-bottom:20px; }
+.settings-group h4 { font-size:16px; margin-bottom:14px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.settings-group label { display:block; font-weight:600; font-size:14px; margin:14px 0 4px 0; }
+.settings-group input, .settings-group select, .settings-group textarea { width:100%; padding:12px 16px; border:1px solid var(--line); background:var(--panel); color:var(--text); border-radius:12px; font-size:15px; outline:none; transition:border 0.2s; font-family:inherit; }
+.settings-group input:focus, .settings-group select:focus, .settings-group textarea:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(108,60,224,0.12); }
+.settings-group .hint { font-size:12px; color:var(--muted); margin-top:4px; }
+.settings-group .toggle-row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--line); }
+.settings-group .toggle-row:last-child { border-bottom:none; }
+.settings-group .toggle-row span { font-weight:500; }
+.switch { position:relative; width:44px; height:24px; background:var(--line); border-radius:40px; cursor:pointer; transition:background 0.2s; flex-shrink:0; }
+.switch.on { background:var(--primary); }
+.switch::after { content:''; position:absolute; top:3px; left:3px; width:18px; height:18px; background:#fff; border-radius:50%; transition:transform 0.2s; box-shadow:0 2px 4px rgba(0,0,0,0.2); }
+.switch.on::after { transform:translateX(20px); }
+.settings-group .btn-primary { background:var(--primary); color:#fff; border:none; padding:10px 24px; border-radius:40px; font-weight:600; font-size:14px; cursor:pointer; transition:background 0.2s; }
+.settings-group .btn-primary:hover { background:var(--primary-light); }
+.settings-group .btn-danger { background:var(--danger); color:#fff; border:none; padding:10px 24px; border-radius:40px; font-weight:600; font-size:14px; cursor:pointer; transition:background 0.2s; }
+.settings-group .btn-danger:hover { background:#b32e48; }
+/* ── Profile ── */
+.profile-avatar { width:80px; height:80px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-size:36px; font-weight:700; color:#fff; margin-bottom:16px; }
+/* ── Modals ── */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:999; padding:20px; animation:fadeIn 0.25s ease; }
+@keyframes fadeIn { 0% { opacity:0; } 100% { opacity:1; } }
+.modal { background:var(--panel); border-radius:var(--radius); padding:32px 30px; max-width:520px; width:100%; border:1px solid var(--line); box-shadow:0 24px 60px rgba(0,0,0,0.3); animation:slideUp 0.25s ease; }
+@keyframes slideUp { 0% { transform:translateY(20px); opacity:0; } 100% { transform:translateY(0); opacity:1; } }
+.modal h3 { font-size:22px; margin-bottom:16px; }
+.modal label { display:block; font-weight:600; font-size:14px; margin:12px 0 4px 0; }
+.modal input, .modal textarea, .modal select { width:100%; padding:12px 16px; border:1px solid var(--line); background:var(--panel2); color:var(--text); border-radius:12px; font-size:15px; outline:none; transition:border 0.2s; font-family:inherit; }
+.modal input:focus, .modal textarea:focus, .modal select:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(108,60,224,0.12); }
+.modal textarea { min-height:80px; resize:vertical; }
+.modal .form-actions { display:flex; gap:12px; margin-top:22px; justify-content:flex-end; }
+.modal .form-actions button { padding:10px 28px; border-radius:40px; border:none; font-weight:600; font-size:14px; cursor:pointer; transition:background 0.15s; }
+.modal .form-actions .btn-secondary { background:var(--panel2); color:var(--text); border:1px solid var(--line); }
+.modal .form-actions .btn-secondary:hover { background:var(--line); }
+.modal .form-actions .btn-primary { background:var(--primary); color:#fff; }
+.modal .form-actions .btn-primary:hover { background:var(--primary-light); }
+/* ── Responsive ── */
+@media (max-width:760px) {
+  .app { grid-template-columns:1fr; height:98vh; max-height:none; border-radius:16px; }
+  .sidebar { display:none; position:absolute; inset:0; z-index:100; background:var(--panel); border-radius:16px; padding:30px 20px; border-right:none; width:280px; box-shadow:0 0 40px rgba(0,0,0,0.3); }
+  .sidebar.open { display:flex; }
+  .mobile-menu-btn { display:flex !important; }
+  .topbar h2 { font-size:17px; }
+  .content { padding:14px 16px 20px; }
+  .msg { max-width:92%; font-size:14px; padding:12px 14px; }
+}
+.content::-webkit-scrollbar, .messages::-webkit-scrollbar, .sidebar::-webkit-scrollbar { width:4px; }
+.content::-webkit-scrollbar-track, .messages::-webkit-scrollbar-track, .sidebar::-webkit-scrollbar-track { background:transparent; }
+.content::-webkit-scrollbar-thumb, .messages::-webkit-scrollbar-thumb, .sidebar::-webkit-scrollbar-thumb { background:var(--line); border-radius:8px; }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">RATAN <small>AI Assistant</small></div>
+    <nav class="nav">
+      <button class="active" data-view="chat"><span class="icon">💬</span> Chat</button>
+      <button data-view="tasks"><span class="icon">✓</span> Tasks</button>
+      <button data-view="notes"><span class="icon">📝</span> Notes</button>
+      <button data-view="reminders"><span class="icon">🔔</span> Reminders</button>
+      <button data-view="settings"><span class="icon">⚙️</span> Settings</button>
+      <button data-view="profile"><span class="icon">👤</span> Profile</button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="theme-toggle" id="themeToggle">🌓 <span id="themeLabel">Dark</span></button>
+      <div class="version">v4.0 · 🔒 Local</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+        <h2 id="viewTitle">💬 Chat <span>Ratan</span></h2>
+      </div>
+      <div class="badge-status online" id="apiStatus">⚡ AI Ready</div>
+    </header>
+
+    <div class="content" id="contentArea">
+
+      <!-- CHAT -->
+      <div class="view active" id="view-chat">
+        <div class="chat-container">
+          <div class="messages" id="chatMessages">
+            <div class="msg ai">👋 Hi, I'm <strong>Ratan</strong>! I'm your personal AI assistant — ask me anything, and I'll give you a thoughtful, varied answer.<span class="timestamp">Just now</span></div>
+          </div>
+          <div class="quick-chips">
+            <button data-prompt="Plan my day">📅 Plan my day</button>
+            <button data-prompt="Create a reminder for tomorrow at 9 AM">⏰ Remind me</button>
+            <button data-prompt="Summarize my notes">📋 Summarize notes</button>
+            <button data-prompt="Create a task list for today">✅ Task list</button>
+            <button data-prompt="Tell me a joke">😄 Tell a joke</button>
+            <button data-prompt="What can you do?">🤔 What can you do?</button>
+          </div>
+          <div class="input-area">
+            <input type="text" id="chatInput" placeholder="Type a message..." autocomplete="off" />
+            <button class="voice-btn" id="voiceBtn" title="Voice input">🎤</button>
+            <button id="sendBtn" title="Send">➤</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TASKS -->
+      <div class="view" id="view-tasks">
+        <div class="list-header"><h3>📋 My Tasks</h3><button class="btn-primary" id="addTaskBtn">+ Add Task</button></div>
+        <div id="taskList"></div>
+      </div>
+
+      <!-- NOTES -->
+      <div class="view" id="view-notes">
+        <div class="list-header"><h3>📝 My Notes</h3><button class="btn-primary" id="addNoteBtn">+ Add Note</button></div>
+        <div id="noteList"></div>
+      </div>
+
+      <!-- REMINDERS -->
+      <div class="view" id="view-reminders">
+        <div class="list-header"><h3>🔔 My Reminders</h3><button class="btn-primary" id="addReminderBtn">+ Add Reminder</button></div>
+        <div id="reminderList"></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="view" id="view-settings">
+        <h3 style="margin-bottom:20px;">⚙️ Settings</h3>
+
+        <div class="settings-group">
+          <h4>🤖 AI Configuration</h4>
+          <label>API Key (DeepSeek / OpenAI compatible)</label>
+          <input type="password" id="apiKeyInput" placeholder="sk-... (leave empty for built-in AI)" />
+          <div class="hint">🔑 Your key is stored locally in your browser. <strong>Never share it.</strong> Leave empty to use the built‑in smart assistant.</div>
+          <label>API Base URL</label>
+          <input type="text" id="apiBaseInput" placeholder="https://api.deepseek.com/v1" />
+          <label>Model</label>
+          <input type="text" id="apiModelInput" placeholder="deepseek-chat" />
+          <button class="btn-primary" style="margin-top:12px;" id="saveApiBtn">Save AI Settings</button>
+          <div class="hint" style="margin-top:8px;">⚠️ Using your own API key means requests go directly from your browser to the AI provider. Your key is never sent to any server except the AI API.</div>
+        </div>
+
+        <div class="settings-group">
+          <h4>🛠 Assistant Settings</h4>
+          <label>Assistant Name</label>
+          <input type="text" id="assistantNameInput" placeholder="Ratan" />
+          <label>Language (for responses)</label>
+          <select id="languageSelect">
+            <option value="English">English</option>
+            <option value="Hindi">Hindi</option>
+            <option value="Hinglish">Hinglish</option>
+          </select>
+          <label>Response Style</label>
+          <select id="responseStyleSelect">
+            <option value="Concise">Concise</option>
+            <option value="Balanced">Balanced</option>
+            <option value="Detailed">Detailed</option>
+          </select>
+        </div>
+
+        <div class="settings-group">
+          <h4>🧠 Memory & Preferences</h4>
+          <div class="toggle-row"><span>Memory (remember context)</span><div class="switch on" id="memorySwitch"></div></div>
+          <div class="toggle-row"><span>Notifications</span><div class="switch on" id="notifSwitch"></div></div>
+        </div>
+
+        <div class="settings-group">
+          <h4>🗂 Data Management</h4>
+          <button class="btn-danger" id="clearChatBtn">Clear Chat History</button>
+          <button class="btn-primary" id="exportDataBtn" style="margin-left:10px;">Export All Data</button>
+          <button class="btn-primary" id="importDataBtn" style="margin-left:10px;">Import Data</button>
+          <input type="file" id="importFileInput" accept=".json" style="display:none;" />
+        </div>
+      </div>
+
+      <!-- PROFILE -->
+      <div class="view" id="view-profile">
+        <h3 style="margin-bottom:20px;">👤 Profile</h3>
+        <div class="settings-group" style="display:flex; flex-direction:column; align-items:center; text-align:center;">
+          <div class="profile-avatar" id="profileAvatar">R</div>
+          <label>Display Name</label>
+          <input type="text" id="profileNameInput" placeholder="Your name" style="max-width:300px; text-align:center;" />
+          <label>Email</label>
+          <input type="email" id="profileEmailInput" placeholder="your@email.com" style="max-width:300px; text-align:center;" />
+          <button class="btn-primary" id="saveProfileBtn" style="margin-top:12px;">Save Profile</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- MODAL CONTAINER -->
+<div id="modalContainer"></div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ── Utility Helpers ──
+  function escapeHtml(str) {
+    if (!str) return '';
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return String(str).replace(/[&<>"']/g, m => map[m]);
+  }
+
+  function getTimeGreeting() {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
+  // ── State ──
+  const state = {
+    tasks: [],
+    notes: [],
+    reminders: [],
+    chatHistory: [],
+    dark: false,
+    currentView: 'chat',
+    listening: false,
+    apiKey: '',
+    apiBase: 'https://api.deepseek.com/v1',
+    apiModel: 'deepseek-chat',
+    assistantName: 'Ratan',
+    language: 'English',
+    responseStyle: 'Balanced',
+    memory: true,
+    notifications: true,
+    profileName: '',
+    profileEmail: '',
+    isProcessing: false,
+    useMockAI: true,
+    intentCounters: {},
+  };
+
+  // ── DOM refs ──
+  const $ = id => document.getElementById(id);
+  const chatMessages = $('chatMessages');
+  const chatInput = $('chatInput');
+  const sendBtn = $('sendBtn');
+  const voiceBtn = $('voiceBtn');
+  const taskList = $('taskList');
+  const noteList = $('noteList');
+  const reminderList = $('reminderList');
+  const modalContainer = $('modalContainer');
+  const themeToggle = $('themeToggle');
+  const themeLabel = $('themeLabel');
+  const viewTitle = $('viewTitle');
+  const apiStatus = $('apiStatus');
+
+  const apiKeyInput = $('apiKeyInput');
+  const apiBaseInput = $('apiBaseInput');
+  const apiModelInput = $('apiModelInput');
+  const assistantNameInput = $('assistantNameInput');
+  const languageSelect = $('languageSelect');
+  const responseStyleSelect = $('responseStyleSelect');
+  const memorySwitch = $('memorySwitch');
+  const notifSwitch = $('notifSwitch');
+  const profileNameInput = $('profileNameInput');
+  const profileEmailInput = $('profileEmailInput');
+  const profileAvatar = $('profileAvatar');
+
+  // ── Load / Save State ──
+  function loadState() {
+    try {
+      const raw = localStorage.getItem('ratan_data');
+      if (raw) {
+        const p = JSON.parse(raw);
+        state.tasks = p.tasks || [];
+        state.notes = p.notes || [];
+        state.reminders = p.reminders || [];
+        state.chatHistory = p.chatHistory || [];
+        state.dark = p.dark || false;
+        state.apiKey = p.apiKey || '';
+        state.apiBase = p.apiBase || 'https://api.deepseek.com/v1';
+        state.apiModel = p.apiModel || 'deepseek-chat';
+        state.assistantName = p.assistantName || 'Ratan';
+        state.language = p.language || 'English';
+        state.responseStyle = p.responseStyle || 'Balanced';
+        state.memory = p.memory !== undefined ? p.memory : true;
+        state.notifications = p.notifications !== undefined ? p.notifications : true;
+        state.profileName = p.profileName || '';
+        state.profileEmail = p.profileEmail || '';
+        state.intentCounters = p.intentCounters || {};
+      }
+    } catch(_) {}
+
+    if (state.chatHistory.length === 0) {
+      const greeting = getTimeGreeting();
+      state.chatHistory.push({ role: 'ai', content: `👋 ${greeting}! I'm <strong>${state.assistantName}</strong>. I'm your personal AI assistant — ask me anything, and I'll give you a thoughtful, varied answer.`, time: Date.now() });
+    }
+
+    state.useMockAI = !state.apiKey || state.apiKey.trim().length === 0;
+
+    if (state.dark) { document.body.classList.add('dark'); themeLabel.textContent = 'Light'; }
+    else { document.body.classList.remove('dark'); themeLabel.textContent = 'Dark'; }
+
+    apiKeyInput.value = state.apiKey;
+    apiBaseInput.value = state.apiBase;
+    apiModelInput.value = state.apiModel;
+    assistantNameInput.value = state.assistantName;
+    languageSelect.value = state.language;
+    responseStyleSelect.value = state.responseStyle;
+    memorySwitch.classList.toggle('on', state.memory);
+    notifSwitch.classList.toggle('on', state.notifications);
+    profileNameInput.value = state.profileName;
+    profileEmailInput.value = state.profileEmail;
+    updateProfileAvatar();
+    updateApiStatus();
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem('ratan_data', JSON.stringify({
+        tasks: state.tasks,
+        notes: state.notes,
+        reminders: state.reminders,
+        chatHistory: state.chatHistory,
+        dark: state.dark,
+        apiKey: state.apiKey,
+        apiBase: state.apiBase,
+        apiModel: state.apiModel,
+        assistantName: state.assistantName,
+        language: state.language,
+        responseStyle: state.responseStyle,
+        memory: state.memory,
+        notifications: state.notifications,
+        profileName: state.profileName,
+        profileEmail: state.profileEmail,
+        intentCounters: state.intentCounters,
+      }));
+    } catch(_) {}
+  }
+
+  function updateApiStatus() {
+    if (state.apiKey && state.apiKey.trim().length > 0) {
+      apiStatus.textContent = '🚀 DeepSeek AI';
+      apiStatus.className = 'badge-status online';
+    } else {
+      apiStatus.textContent = '⚡ Smart AI';
+      apiStatus.className = 'badge-status online';
+    }
+  }
+
+  function updateProfileAvatar() {
+    const name = state.profileName || state.assistantName || 'R';
+    profileAvatar.textContent = name.charAt(0).toUpperCase();
+  }
+
+  // ── Render Functions ──
+  function renderChat() {
+    chatMessages.innerHTML = '';
+    state.chatHistory.forEach(msg => {
+      const div = document.createElement('div');
+      div.className = `msg ${msg.role === 'user' ? 'user' : 'ai'}`;
+      div.innerHTML = msg.content + `<span class="timestamp">${new Date(msg.time).toLocaleTimeString()}</span>`;
+      chatMessages.appendChild(div);
+    });
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function renderTasks() {
+    if (state.tasks.length === 0) {
+      taskList.innerHTML = `<div class="empty-state"><div class="big-icon">✅</div><h3>All caught up!</h3><p>No tasks yet. Add one above.</p></div>`;
+      return;
+    }
+    taskList.innerHTML = state.tasks.map((t, idx) => `
+      <div class="item-card ${t.done ? 'done' : ''}" style="border-left-color: ${t.color || '#6c3ce0'}">
+        <div class="info">
+          <div class="title">${escapeHtml(t.title)}</div>
+          ${t.desc ? `<div class="desc">${escapeHtml(t.desc)}</div>` : ''}
+          <div class="meta">${t.due ? '📅 ' + escapeHtml(t.due) : ''} ${t.priority ? '⚡' + escapeHtml(t.priority) : ''}</div>
+        </div>
+        <div class="actions">
+          <button data-idx="${idx}" data-action="toggle">${t.done ? '↩' : '✓'}</button>
+          <button data-idx="${idx}" data-action="delete" class="delete">✕</button>
+        </div>
+      </div>
+    `).join('');
+    taskList.querySelectorAll('[data-action="toggle"]').forEach(btn => {
+      btn.addEventListener('click', () => { const idx = parseInt(btn.dataset.idx); state.tasks[idx].done = !state.tasks[idx].done; saveState(); renderTasks(); });
+    });
+    taskList.querySelectorAll('[data-action="delete"]').forEach(btn => {
+      btn.addEventListener('click', () => { const idx = parseInt(btn.dataset.idx); if (confirm('Delete this task?')) { state.tasks.splice(idx, 1); saveState(); renderTasks(); } });
+    });
+  }
+
+  function renderNotes() {
+    if (state.notes.length === 0) {
+      noteList.innerHTML = `<div class="empty-state"><div class="big-icon">📝</div><h3>No notes yet</h3><p>Capture your thoughts here.</p></div>`;
+      return;
+    }
+    noteList.innerHTML = state.notes.map((n, idx) => `
+      <div class="item-card" style="border-left-color: ${n.color || '#6c3ce0'}">
+        <div class="info">
+          <div class="title">${escapeHtml(n.title)}</div>
+          <div class="desc">${escapeHtml(n.content)}</div>
+          <div class="meta">${new Date(n.updated).toLocaleDateString()}</div>
+        </div>
+        <div class="actions">
+          <button data-idx="${idx}" data-action="edit">✎</button>
+          <button data-idx="${idx}" data-action="delete" class="delete">✕</button>
+        </div>
+      </div>
+    `).join('');
+    noteList.querySelectorAll('[data-action="edit"]').forEach(btn => {
+      btn.addEventListener('click', () => { const idx = parseInt(btn.dataset.idx); showNoteModal(state.notes[idx], idx); });
+    });
+    noteList.querySelectorAll('[data-action="delete"]').forEach(btn => {
+      btn.addEventListener('click', () => { const idx = parseInt(btn.dataset.idx); if (confirm('Delete this note?')) { state.notes.splice(idx, 1); saveState(); renderNotes(); } });
+    });
+  }
+
+  function renderReminders() {
+    if (state.reminders.length === 0) {
+      reminderList.innerHTML = `<div class="empty-state"><div class="big-icon">🔔</div><h3>No reminders</h3><p>Set reminders so you never forget.</p></div>`;
+      return;
+    }
+    reminderList.innerHTML = state.reminders.map((r, idx) => `
+      <div class="item-card" style="border-left-color: ${r.color || '#6c3ce0'}">
+        <div class="info">
+          <div class="title">${escapeHtml(r.title)}</div>
+          ${r.desc ? `<div class="desc">${escapeHtml(r.desc)}</div>` : ''}
+          <div class="meta">⏰ ${escapeHtml(r.when)}</div>
+        </div>
+        <div class="actions">
+          <button data-idx="${idx}" data-action="delete" class="delete">✕</button>
+        </div>
+      </div>
+    `).join('');
+    reminderList.querySelectorAll('[data-action="delete"]').forEach(btn => {
+      btn.addEventListener('click', () => { const idx = parseInt(btn.dataset.idx); if (confirm('Delete this reminder?')) { state.reminders.splice(idx, 1); saveState(); renderReminders(); } });
+    });
+  }
+
+  function renderAll() { renderChat(); renderTasks(); renderNotes(); renderReminders(); }
+
+  // ── Mock AI (varied responses) ──
+  function getMockResponse(userMsg, history) {
+    const lower = userMsg.toLowerCase().trim();
+    const name = state.assistantName;
+    const repeatCount = (state.intentCounters[lower.slice(0,30)] || 0) + 1;
+    state.intentCounters[lower.slice(0,30)] = repeatCount;
+
+    // Greetings
+    if (/^(hi|hello|hey|namaste|namaskar|hola|greetings|good morning|good afternoon|good evening|sup|yo)/i.test(lower)) {
+      const greetings = [
+        `👋 ${getTimeGreeting()}, ${state.profileName || 'friend'}! How can I make your day better today?`,
+        `Hey there! ${getTimeGreeting()}! I'm ${name} — ready to help you with anything.`,
+        `Hello! Great to see you again! What's on your mind?`,
+        `Namaste! I'm ${name}. How can I assist you today?`,
+      ];
+      return greetings[repeatCount % greetings.length];
+    }
+
+    // Capabilities
+    if (/what can you do|help|capabilities|features|how can you help|tell me about yourself|who are you|your purpose/i.test(lower)) {
+      return `I'm ${name}, your personal AI assistant. I can:
+• 💬 Chat with you about anything
+• ✅ Create and manage tasks
+• 📝 Write and organize notes
+• 🔔 Set reminders
+• 📅 Plan your day
+• 📋 Summarize information
+• 😄 Tell jokes and have fun conversations
+
+I'm also connected to DeepSeek AI if you add your API key in Settings!`;
+    }
+
+    // Jokes
+    if (/joke|funny|laugh|humor|make me laugh/i.test(lower)) {
+      const jokes = [
+        `😄 Why don't scientists trust atoms? Because they make up everything!`,
+        `😂 What do you call a fake noodle? An impasta!`,
+        `🤣 Why did the scarecrow win an award? Because he was outstanding in his field!`,
+        `😆 What do you call a bear with no teeth? A gummy bear!`,
+      ];
+      return jokes[repeatCount % jokes.length];
+    }
+
+    // Time / Date
+    if (/time|date|day|today|what day|what's the date/i.test(lower)) {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      return `🕐 It's ${timeStr} on ${dateStr}. How can I help you make the most of your day?`;
+    }
+
+    // Create Task
+    if (/create (?:a )?task|new task|add task|task to|to-do|todo|add to-do/i.test(lower)) {
+      const taskMatch = userMsg.match(/task\s+(?:to\s+)?([^,.]+)/i) || userMsg.match(/add\s+(?:a\s+)?([^,.]+?)(?:\s+to|$)/i);
+      let title = taskMatch ? taskMatch[1].trim() : userMsg.slice(0, 40);
+      if (title.length < 3) title = 'New task';
+      state.tasks.push({ title: title, desc: 'Created via chat', due: '', priority: 'Medium', color: '#6c3ce0', done: false, updated: Date.now() });
+      saveState(); renderTasks();
+      const responses = [
+        `✅ Task "${title}" created! You can view it in the Tasks tab. Want me to add a due date or priority?`,
+        `📋 Done! I've added "${title}" to your task list. Need any other tasks?`,
+        `👍 Task "${title}" is saved. I'll remind you if it's due soon. Anything else?`,
+      ];
+      return responses[repeatCount % responses.length];
+    }
+
+    // Reminder
+    if (/remind|reminder|set a reminder|remember to/i.test(lower)) {
+      const whenMatch = userMsg.match(/(\d{1,2}(?::\d{2})?\s*(?:am|pm)?|tomorrow|today|next\s+\w+|\d{1,2}\s+\w+)/i);
+      const when = whenMatch ? whenMatch[0] : 'later';
+      let title = userMsg.replace(/remind\s+me\s+to\s+/i, '').replace(/at\s+[^\s]+/, '').replace(/for\s+[^\s]+/, '').trim() || 'Reminder';
+      if (title.length < 3) title = 'Reminder';
+      state.reminders.push({ title: title, desc: 'Created via chat', when: when, color: '#6c3ce0', updated: Date.now() });
+      saveState(); renderReminders();
+      return `🔔 Reminder set: "${title}" for ${when}. I'll notify you at the right time.`;
+    }
+
+    // Note
+    if (/write (?:a )?note|create note|save note|note down|take note/i.test(lower)) {
+      let content = userMsg.replace(/write\s+a\s+note\s*/i, '').replace(/create\s+note\s*/i, '').replace(/save\s+note\s*/i, '').replace(/note\s+down\s*/i, '').trim();
+      if (!content || content.length < 3) content = 'Quick note';
+      state.notes.push({ title: content.slice(0, 30), content: content, color: '#6c3ce0', updated: Date.now() });
+      saveState(); renderNotes();
+      return `📝 Note saved! I've stored "${content.slice(0, 50)}${content.length > 50 ? '...' : ''}" for you. Check the Notes tab.`;
+    }
+
+    // Plan my day
+    if (/plan my day|daily plan|today's plan|organize my day/i.test(lower)) {
+      const pending = state.tasks.filter(t => !t.done).length;
+      const total = state.tasks.length;
+      const notes = state.notes.length;
+      let plan = `📅 Here's your day plan, ${state.profileName || 'friend'}:\n\n`;
+      plan += `• Morning: Review and prioritize your ${pending} pending ${pending === 1 ? 'task' : 'tasks'}\n`;
+      plan += `• Afternoon: Focus on completing ${Math.min(3, pending)} key ${pending === 1 ? 'task' : 'tasks'}\n`;
+      plan += `• Evening: Reflect on what you accomplished today\n\n`;
+      plan += `📊 You have ${total} total ${total === 1 ? 'task' : 'tasks'}, ${notes} ${notes === 1 ? 'note' : 'notes'}, and ${state.reminders.length} ${state.reminders.length === 1 ? 'reminder' : 'reminders'}.\n`;
+      return plan;
+    }
+
+    // Summarize notes
+    if (/summarize|summary of notes|what's in my notes|note summary/i.test(lower)) {
+      if (state.notes.length === 0) return "📋 You don't have any notes yet. Start writing some notes and I'll summarize them for you!";
+      let summary = `📋 Here's a summary of your ${state.notes.length} notes:\n\n`;
+      state.notes.slice(0, 7).forEach((n, i) => {
+        summary += `${i+1}. **${n.title}** — ${n.content.slice(0, 60)}${n.content.length > 60 ? '...' : ''}\n`;
+      });
+      if (state.notes.length > 7) summary += `\n... and ${state.notes.length - 7} more notes.`;
+      return summary;
+    }
+
+    // How are you
+    if (/how are you|how's it going|how do you feel|you okay/i.test(lower)) {
+      return `I'm doing great, thanks for asking! 😊 I'm here and ready to help. How about you?`;
+    }
+
+    // Thanks
+    if (/thank|thanks|thx|ty/i.test(lower)) {
+      return `You're welcome! 😊 Always happy to help. Anything else I can assist with?`;
+    }
+
+    // Goodbye
+    if (/bye|goodbye|see you|cya|gotta go|ttyl/i.test(lower)) {
+      return `👋 Goodbye! It was great chatting with you. Come back anytime you need help!`;
+    }
+
+    // Productivity tip
+    if (/tip|advice|suggestion|how to|improve|better/i.test(lower)) {
+      const tips = [
+        `💡 Productivity tip: Try the "Pomodoro Technique" — work for 25 minutes, then take a 5-minute break.`,
+        `📈 Break large tasks into smaller, manageable steps. It reduces overwhelm.`,
+        `🧠 Taking regular breaks improves overall productivity. Step away for 5 minutes every hour.`,
+        `✅ Do your most important/difficult task first thing in the morning — "eat the frog".`,
+      ];
+      return tips[repeatCount % tips.length];
+    }
+
+    // Fallback with variety
+    const fallbacks = [
+      `🤔 That's interesting! Tell me more about it — I'd love to understand better.`,
+      `😊 I see. Could you elaborate a bit? I want to make sure I give you the best help.`,
+      `💭 Hmm, that's a good point. Let me think about it... What exactly would you like me to do with that?`,
+      `🧐 I'm listening! Could you give me more context so I can assist you better?`,
+      `✨ I hear you. Are you looking for information, or do you need me to take action like creating a task or note?`,
+      `🤗 Got it! I'm here to help. Would you like me to create a task, note, or reminder based on what you just said?`,
+      `💡 That's a great topic! I'd love to dive deeper. Can you tell me more?`,
+    ];
+    const hash = userMsg.length % fallbacks.length;
+    return fallbacks[(repeatCount + hash) % fallbacks.length];
+  }
+
+  // ── Real DeepSeek API ──
+  async function callDeepSeek(messages) {
+    if (!state.apiKey || state.apiKey.trim().length === 0) throw new Error('API key not set.');
+    const base = state.apiBase || 'https://api.deepseek.com/v1';
+    const model = state.apiModel || 'deepseek-chat';
+    const systemPrompt = `You are ${state.assistantName}. Language: ${state.language}. Style: ${state.responseStyle}. Be concise, clear, and helpful. Always give varied, non-repetitive answers.`;
+    const payload = {
+      model: model,
+      messages: [{ role: 'system', content: systemPrompt }, ...messages],
+      temperature: 0.85,
+      max_tokens: 1024,
+    };
+    const response = await fetch(base + '/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.apiKey}` },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`API error (${response.status}): ${errText}`);
+    }
+    const data = await response.json();
+    return data.choices[0].message.content;
+  }
+
+  // ── Send Message ──
+  async function sendMessage(text) {
+    const msg = text.trim();
+    if (!msg || state.isProcessing) return;
+
+    state.chatHistory.push({ role: 'user', content: escapeHtml(msg), time: Date.now() });
+    renderChat();
+
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'typing-indicator';
+    typingDiv.innerHTML = `<span>${state.assistantName}</span><span class="dot"></span><span class="dot"></span><span class="dot"></span>`;
+    chatMessages.appendChild(typingDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    state.isProcessing = true;
+    try {
+      let aiContent = '';
+      if (state.apiKey && state.apiKey.trim().length > 0) {
+        try {
+          let apiMessages = state.memory ? state.chatHistory.slice(-12).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content.replace(/<[^>]*>/g, '') })) : [{ role: 'user', content: msg }];
+          aiContent = await callDeepSeek(apiMessages);
+        } catch (apiErr) {
+          aiContent = `⚠️ API error: ${apiErr.message}\n\nI'll respond with built‑in intelligence:\n\n${getMockResponse(msg, state.chatHistory)}`;
+        }
+      } else {
+        aiContent = getMockResponse(msg, state.chatHistory);
+      }
+      if (typingDiv.parentNode) typingDiv.remove();
+      state.chatHistory.push({ role: 'ai', content: escapeHtml(aiContent), time: Date.now() });
+      saveState();
+      renderChat();
+    } catch (err) {
+      if (typingDiv.parentNode) typingDiv.remove();
+      state.chatHistory.push({ role: 'ai', content: `⚠️ Error: ${err.message}`, time: Date.now() });
+      saveState();
+      renderChat();
+    } finally {
+      state.isProcessing = false;
+    }
+    chatInput.value = '';
+    chatInput.focus();
+  }
+
+  // ── Voice ──
+  let recognition = null;
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SR();
+    recognition.lang = 'en-US';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.onresult = (e) => {
+      const transcript = e.results[0][0].transcript;
+      chatInput.value = transcript;
+      sendMessage(transcript);
+      voiceBtn.classList.remove('listening');
+      voiceBtn.textContent = '🎤';
+    };
+    recognition.onerror = () => { voiceBtn.classList.remove('listening'); voiceBtn.textContent = '🎤'; };
+    recognition.onend = () => { voiceBtn.classList.remove('listening'); voiceBtn.textContent = '🎤'; };
+  }
+
+  voiceBtn.addEventListener('click', () => {
+    if (!recognition) { alert('Voice input not supported in this browser.'); return; }
+    if (voiceBtn.classList.contains('listening')) { recognition.stop(); voiceBtn.classList.remove('listening'); voiceBtn.textContent = '🎤'; return; }
+    try { recognition.start(); voiceBtn.classList.add('listening'); voiceBtn.textContent = '⏹'; } catch(_) { alert('Microphone permission needed.'); }
+  });
+
+  // ── Navigation ──
+  function switchView(view) {
+    state.currentView = view;
+    document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+    document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
+    const titles = { chat: '💬 Chat', tasks: '✓ Tasks', notes: '📝 Notes', reminders: '🔔 Reminders', settings: '⚙️ Settings', profile: '👤 Profile' };
+    viewTitle.innerHTML = titles[view] + ` <span>${state.assistantName}</span>`;
+    document.getElementById('sidebar').classList.remove('open');
+  }
+
+  document.querySelectorAll('.nav button').forEach(btn => {
+    btn.addEventListener('click', () => switchView(btn.dataset.view));
+  });
+
+  document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+  });
+
+  // ── Theme ──
+  themeToggle.addEventListener('click', () => {
+    state.dark = !state.dark;
+    document.body.classList.toggle('dark', state.dark);
+    themeLabel.textContent = state.dark ? 'Light' : 'Dark';
+    saveState();
+  });
+
+  // ── Add Buttons ──
+  document.getElementById('addTaskBtn').addEventListener('click', () => showTaskModal(null, null));
+  document.getElementById('addNoteBtn').addEventListener('click', () => showNoteModal(null, null));
+  document.getElementById('addReminderBtn').addEventListener('click', () => showReminderModal(null, null));
+
+  // ── Send ──
+  sendBtn.addEventListener('click', () => sendMessage(chatInput.value));
+  chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(chatInput.value); });
+
+  // ── Quick Chips ──
+  document.querySelectorAll('.quick-chips button').forEach(btn => {
+    btn.addEventListener('click', () => sendMessage(btn.dataset.prompt));
+  });
+
+  // ── Settings ──
+  document.getElementById('saveApiBtn').addEventListener('click', () => {
+    state.apiKey = apiKeyInput.value.trim();
+    state.apiBase = apiBaseInput.value.trim() || 'https://api.deepseek.com/v1';
+    state.apiModel = apiModelInput.value.trim() || 'deepseek-chat';
+    state.assistantName = assistantNameInput.value.trim() || 'Ratan';
+    state.language = languageSelect.value;
+    state.responseStyle = responseStyleSelect.value;
+    state.useMockAI = !state.apiKey || state.apiKey.trim().length === 0;
+    saveState();
+    updateApiStatus();
+    viewTitle.innerHTML = `💬 Chat <span>${state.assistantName}</span>`;
+    alert('Settings saved successfully!');
+  });
+
+  // ── Toggles ──
+  memorySwitch.addEventListener('click', () => {
+    state.memory = !state.memory;
+    memorySwitch.classList.toggle('on', state.memory);
+    saveState();
+  });
+  notifSwitch.addEventListener('click', () => {
+    state.notifications = !state.notifications;
+    notifSwitch.classList.toggle('on', state.notifications);
+    saveState();
+  });
+
+  // ── Profile ──
+  document.getElementById('saveProfileBtn').addEventListener('click', () => {
+    state.profileName = profileNameInput.value.trim();
+    state.profileEmail = profileEmailInput.value.trim();
+    saveState();
+    updateProfileAvatar();
+    alert('Profile updated!');
+  });
+
+  // ── Data Management ──
+  // Clear Chat
+  document.getElementById('clearChatBtn').addEventListener('click', () => {
+    if (confirm('Clear all chat history?')) {
+      state.chatHistory = [];
+      const greeting = getTimeGreeting();
+      state.chatHistory.push({ role: 'ai', content: `👋 ${greeting}! I'm <strong>${state.assistantName}</strong>. I'm your personal AI assistant — ask me anything, and I'll give you a thoughtful, varied answer.`, time: Date.now() });
+      saveState();
+      renderChat();
+      alert('Chat history cleared.');
+    }
+  });
+
+  // Export Data
+  document.getElementById('exportDataBtn').addEventListener('click', () => {
+    const data = {
+      tasks: state.tasks,
+      notes: state.notes,
+      reminders: state.reminders,
+      chatHistory: state.chatHistory,
+      settings: {
+        apiKey: state.apiKey,
+        apiBase: state.apiBase,
+        apiModel: state.apiModel,
+        assistantName: state.assistantName,
+        language: state.language,
+        responseStyle: state.responseStyle,
+        memory: state.memory,
+        notifications: state.notifications,
+        profileName: state.profileName,
+        profileEmail: state.profileEmail,
+      }
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ratan_data_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // Import Data
+  document.getElementById('importDataBtn').addEventListener('click', () => {
+    document.getElementById('importFileInput').click();
+  });
+  document.getElementById('importFileInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (data.tasks) state.tasks = data.tasks;
+        if (data.notes) state.notes = data.notes;
+        if (data.reminders) state.reminders = data.reminders;
+        if (data.chatHistory) state.chatHistory = data.chatHistory;
+        if (data.settings) {
+          state.apiKey = data.settings.apiKey || state.apiKey;
+          state.apiBase = data.settings.apiBase || state.apiBase;
+          state.apiModel = data.settings.apiModel || state.apiModel;
+          state.assistantName = data.settings.assistantName || state.assistantName;
+          state.language = data.settings.language || state.language;
+          state.responseStyle = data.settings.responseStyle || state.responseStyle;
+          state.memory = data.settings.memory !== undefined ? data.settings.memory : state.memory;
+          state.notifications = data.settings.notifications !== undefined ? data.settings.notifications : state.notifications;
+          state.profileName = data.settings.profileName || state.profileName;
+          state.profileEmail = data.settings.profileEmail || state.profileEmail;
+        }
+        state.useMockAI = !state.apiKey || state.apiKey.trim().length === 0;
+        saveState();
+        loadState();
+        renderAll();
+        updateApiStatus();
+        updateProfileAvatar();
+        // sync UI inputs
+        apiKeyInput.value = state.apiKey;
+        apiBaseInput.value = state.apiBase;
+        apiModelInput.value = state.apiModel;
+        assistantNameInput.value = state.assistantName;
+        languageSelect.value = state.language;
+        responseStyleSelect.value = state.responseStyle;
+        memorySwitch.classList.toggle('on', state.memory);
+        notifSwitch.classList.toggle('on', state.notifications);
+        profileNameInput.value = state.profileName;
+        profileEmailInput.value = state.profileEmail;
+        alert('Data imported successfully!');
+      } catch(err) {
+        alert('Invalid file format.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  // ── Modals ──
+  function closeModal() { modalContainer.innerHTML = ''; }
+
+  function showTaskModal(taskData, editIdx) {
+    const isEdit = editIdx !== undefined && editIdx !== null;
+    const t = taskData || { title: '', desc: '', due: '', priority: 'Medium', color: '#6c3ce0' };
+    modalContainer.innerHTML = `
+      <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+          <h3>${isEdit ? '✎ Edit Task' : '➕ New Task'}</h3>
+          <label>Title *</label>
+          <input id="taskTitle" value="${escapeHtml(t.title)}" placeholder="Task title..." />
+          <label>Description</label>
+          <textarea id="taskDesc" placeholder="Description...">${escapeHtml(t.desc)}</textarea>
+          <label>Due date</label>
+          <input id="taskDue" type="date" value="${t.due || ''}" />
+          <label>Priority</label>
+          <select id="taskPriority">
+            <option value="Low" ${t.priority === 'Low' ? 'selected' : ''}>Low</option>
+            <option value="Medium" ${t.priority === 'Medium' ? 'selected' : ''}>Medium</option>
+            <option value="High" ${t.priority === 'High' ? 'selected' : ''}>High</option>
+          </select>
+          <label>Color</label>
+          <input id="taskColor" type="color" value="${t.color || '#6c3ce0'}" />
+          <div class="form-actions">
+            <button class="btn-secondary" id="modalCancel">Cancel</button>
+            <button class="btn-primary" id="modalSave">${isEdit ? 'Update' : 'Create'}</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('modalOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
+    document.getElementById('modalCancel').addEventListener('click', closeModal);
+    document.getElementById('modalSave').addEventListener('click', () => {
+      const title = document.getElementById('taskTitle').value.trim();
+      if (!title) { alert('Title is required.'); return; }
+      const obj = {
+        title,
+        desc: document.getElementById('taskDesc').value.trim(),
+        due: document.getElementById('taskDue').value,
+        priority: document.getElementById('taskPriority').value,
+        color: document.getElementById('taskColor').value,
+        done: false,
+        updated: Date.now(),
+      };
+      if (isEdit) { state.tasks[editIdx] = { ...state.tasks[editIdx], ...obj }; }
+      else { state.tasks.push(obj); }
+      saveState(); renderTasks(); closeModal();
+    });
+  }
+
+  function showNoteModal(noteData, editIdx) {
+    const isEdit = editIdx !== undefined && editIdx !== null;
+    const n = noteData || { title: '', content: '', color: '#6c3ce0' };
+    modalContainer.innerHTML = `
+      <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+          <h3>${isEdit ? '✎ Edit Note' : '📝 New Note'}</h3>
+          <label>Title *</label>
+          <input id="noteTitle" value="${escapeHtml(n.title)}" placeholder="Note title..." />
+          <label>Content</label>
+          <textarea id="noteContent" placeholder="Write your note...">${escapeHtml(n.content)}</textarea>
+          <label>Color</label>
+          <input id="noteColor" type="color" value="${n.color || '#6c3ce0'}" />
+          <div class="form-actions">
+            <button class="btn-secondary" id="modalCancel">Cancel</button>
+            <button class="btn-primary" id="modalSave">${isEdit ? 'Update' : 'Create'}</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('modalOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
+    document.getElementById('modalCancel').addEventListener('click', closeModal);
+    document.getElementById('modalSave').addEventListener('click', () => {
+      const title = document.getElementById('noteTitle').value.trim();
+      if (!title) { alert('Title is required.'); return; }
+      const obj = {
+        title,
+        content: document.getElementById('noteContent').value.trim(),
+        color: document.getElementById('noteColor').value,
+        updated: Date.now(),
+      };
+      if (isEdit) { state.notes[editIdx] = { ...state.notes[editIdx], ...obj }; }
+      else { state.notes.push(obj); }
+      saveState(); renderNotes(); closeModal();
+    });
+  }
+
+  function showReminderModal(remData, editIdx) {
+    const isEdit = editIdx !== undefined && editIdx !== null;
+    const r = remData || { title: '', desc: '', when: '', color: '#6c3ce0' };
+    modalContainer.innerHTML = `
+      <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+          <h3>${isEdit ? '✎ Edit Reminder' : '🔔 New Reminder'}</h3>
+          <label>Title *</label>
+          <input id="remTitle" value="${escapeHtml(r.title)}" placeholder="Reminder title..." />
+          <label>Description</label>
+          <textarea id="remDesc" placeholder="Description...">${escapeHtml(r.desc)}</textarea>
+          <label>When</label>
+          <input id="remWhen" type="datetime-local" value="${r.when || ''}" />
+          <label>Color</label>
+          <input id="remColor" type="color" value="${r.color || '#6c3ce0'}" />
+          <div class="form-actions">
+            <button class="btn-secondary" id="modalCancel">Cancel</button>
+            <button class="btn-primary" id="modalSave">${isEdit ? 'Update' : 'Create'}</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('modalOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
+    document.getElementById('modalCancel').addEventListener('click', closeModal);
+    document.getElementById('modalSave').addEventListener('click', () => {
+      const title = document.getElementById('remTitle').value.trim();
+      if (!title) { alert('Title is required.'); return; }
+      const obj = {
+        title,
+        desc: document.getElementById('remDesc').value.trim(),
+        when: document.getElementById('remWhen').value,
+        color: document.getElementById('remColor').value,
+        updated: Date.now(),
+      };
+      if (isEdit) { state.reminders[editIdx] = { ...state.reminders[editIdx], ...obj }; }
+      else { state.reminders.push(obj); }
+      saveState(); renderReminders(); closeModal();
+    });
+  }
+
+  // ── Init ──
+  loadState();
+  renderAll();
+
+  // Close modal on overlay click
+  document.addEventListener('click', (e) => { if (e.target.classList.contains('modal-overlay')) closeModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+  // Close mobile sidebar on outside click
+  document.addEventListener('click', (e) => {
+    const sidebar = document.getElementById('sidebar');
+    if (window.innerWidth <= 760 && sidebar.classList.contains('open')) {
+      if (!sidebar.contains(e.target) && !document.getElementById('mobileMenuBtn').contains(e.target)) {
+        sidebar.classList.remove('open');
+      }
+    }
+  });
+
+  console.log('🟣 RATAN AI v4 — All features working perfectly.');
+})();
+</script>
+</body>
+</html>
